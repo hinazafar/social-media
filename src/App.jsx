@@ -9,7 +9,7 @@ import { useState } from "react";
 import PostListProvider from "./store/post-list-store";
 /* In this project, ihave used React components, react Hooks specially useState,useRef, useContext and useEffect*/
 
-function App() {
+function App() { 
   const [selectedTab, setSelectedTab] = useState("Home");
   return (
     <PostListProvider>
