@@ -1,9 +1,9 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect, useState } from "react";
 
 export const PostList = createContext({
   postList: [],
   addPost: () => {},
-  addInitialPosts: () => {},
+  fetching: false,
   deletePost: () => {},
 });
 
@@ -15,6 +15,7 @@ const postListReducer = (currPostList, action) => {
     );
   } else if (action.type === "ADD_POST") {
     newPostList = [action.payload, ...currPostList];
+    console.log("action received" + action.payload.post);
   } else if (action.type === "ADD_INITIAL_POSTS") {
     newPostList = action.payload.posts;
   }
@@ -23,27 +24,24 @@ const postListReducer = (currPostList, action) => {
 
 const PostListProvider = ({ children }) => {
   const [postList, dispatchPostList] = useReducer(postListReducer, []);
-  const addPost = (userId, postTitle, postBody, reactions, tags) => {
+
+  const [fetching, setFetching] = useState(false);
+
+  // ADD POST HANDLER //
+  const addPost = (post) => {
     dispatchPostList({
       type: "ADD_POST",
-      payload: {
-        id: Date.now(),
-        title: postTitle,
-        body: postBody,
-        reactions: reactions,
-        userId: userId,
-        tags: tags,
-      },
+      payload: post,
     });
   };
+  // ADD INITIAL POSTS HANDLER //
   const addInitialPosts = (posts) => {
     dispatchPostList({
       type: "ADD_INITIAL_POSTS",
-      payload: {
-        posts,
-      },
+      payload: { posts },
     });
   };
+  // DELETE POST HANDLER //
   const deletePost = (postId) => {
     dispatchPostList({
       type: "DELETE_POST",
@@ -52,12 +50,27 @@ const PostListProvider = ({ children }) => {
       },
     });
   };
+  useEffect(() => {
+    setFetching(true);
+    const controller = new AbortController();
+    const signal = controller.signal;
+    fetch("https://dummyjson.com/posts", { signal })
+      .then((res) => res.json())
+      .then((data) => {
+        addInitialPosts(data.posts);
+        setFetching(false);
+      });
+    return () => {
+      console.log("Cleaning up Effect");
+      controller.abort();
+    };
+  }, []);
   return (
     <PostList.Provider
       value={{
         postList,
         addPost,
-        addInitialPosts,
+        fetching,
         deletePost,
       }}
     >
